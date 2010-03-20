@@ -7,8 +7,11 @@
  * @return
  *   An array of modules to enable.
  */
-function default_profile_modules() {
-  return array('color', 'comment', 'help', 'menu', 'taxonomy', 'dblog');
+function planet_profile_modules() {
+  return array(
+    'aggregator',
+    'menu',
+  );
 }
 
 /**
