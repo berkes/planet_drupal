@@ -22,10 +22,10 @@ function planet_profile_modules() {
  *   and optional 'language' to override the language selection for
  *   language-specific profiles.
  */
-function default_profile_details() {
+function planet_profile_details() {
   return array(
-    'name' => 'Drupal',
-    'description' => 'Select this profile to enable some basic Drupal functionality and the default theme.'
+    'name' => 'Planet',
+    'description' => 'Install a Drupal core, optimised for running a <em>simple</em> Planet RSS aggregator.'
   );
 }
 
@@ -38,7 +38,7 @@ function default_profile_details() {
  *   while the values will be displayed to the user in the installer
  *   task list.
  */
-function default_profile_task_list() {
+function planet_profile_task_list() {
 }
 
 /**
@@ -92,7 +92,7 @@ function default_profile_task_list() {
  *   An optional HTML string to display to the user. Only used if you
  *   modify the $task, otherwise discarded.
  */
-function default_profile_tasks(&$task, $url) {
+function planet_profile_tasks(&$task, $url) {
 
   // Insert default user-defined node types into the database. For a complete
   // list of available node type attributes, refer to the node type API
@@ -135,7 +135,7 @@ function default_profile_tasks(&$task, $url) {
  * Allows the profile to alter the site-configuration form. This is
  * called through custom invocation, so $form_state is not populated.
  */
-function default_form_alter(&$form, $form_state, $form_id) {
+function planet_form_alter(&$form, $form_state, $form_id) {
   if ($form_id == 'install_configure') {
     // Set default for site name field.
     $form['site_information']['site_name']['#default_value'] = $_SERVER['SERVER_NAME'];
