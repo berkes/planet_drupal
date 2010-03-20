@@ -123,6 +123,11 @@ function planet_profile_tasks(&$task, $url) {
   $theme_settings = variable_get('theme_settings', array());
   $theme_settings['toggle_node_info_page'] = FALSE;
   variable_set('theme_settings', $theme_settings);
+  
+  // Add roles
+  _planet_set_roles();
+  // Add permissions
+  _planet_set_permissions();
 
   // Update the menu router information.
   menu_rebuild();
@@ -139,4 +144,102 @@ function planet_form_alter(&$form, $form_state, $form_id) {
     // Set default for site name field.
     $form['site_information']['site_name']['#default_value'] = $_SERVER['SERVER_NAME'];
   }
+}
+
+/** Adds default roles.
+ *
+ * @return
+ *   null
+ */
+function _planet_set_roles() {
+  $roles = array_keys(_planet_get_roles());
+  
+  foreach ($roles as $role) {
+    db_query("INSERT INTO {role} (name) VALUES ('%s')", $role);
+  }
+}
+
+/** Adds permissions for default roles.
+ *
+ * @return
+ *   null
+ */
+function _planet_set_permissions() {
+  $roles = _planet_get_roles() + _planet_get_core_roles();
+  $core_roles = user_roles();
+  
+  foreach ($roles as $rolename => $permissions) {
+    //find the role_id that belongs to a role name.
+    $role_id = array_search($rolename, $core_roles);
+    $permissions_string = implode(', ', $permissions);
+    
+    //ugly, because the role_id does not have to match permission_id. But it works.
+    db_query("REPLACE {permission} SET rid = %d, pid = %d, perm = '%s'", $role_id, $role_id, $permissions_string, $role_id);
+  }
+}
+
+/** returns an array of roles with their permissions to be set and used.
+ *
+ * @return
+ *   array, key is the rolename, value an array of permissions.
+ */
+function _planet_get_roles() {
+  return array(
+    'admin' => array(
+      'access news feeds',
+      'administer news feeds',
+      'administer blocks',
+      'administer filters',
+      'administer menu',
+      'access content',
+      'administer content types',
+      'administer nodes',
+      'create page content',
+      'delete any page content',
+      'delete own page content',
+      'delete revisions',
+      'edit any page content',
+      'edit own page content',
+      'revert revisions',
+      'view revisions',
+      'access administration pages',
+      'access site reports',
+      'administer actions',
+      'administer files',
+      'administer site configuration',
+      'access user profiles',
+      'administer permissions',
+      'administer users',
+      'change own username',
+    ),
+    'editor' => array(
+      'administer news feeds',
+      'create page content',
+      'delete any page content',
+      'delete own page content',
+      'edit any page content',
+      'edit own page content',
+      'revert revisions',
+      'view revisions',
+      'change own username',
+    ),
+  );
+}
+
+/** returns an array with their permissions for anonymous and registered user.
+ *
+ * @return
+ *   array , key is the rolename, value an array of permissions.
+ */
+function _planet_get_core_roles() {
+  return array(
+    'anonymous user' => array( //Default Anonymous user.
+     'access news feeds',
+     'access content',
+    ),
+    'authenticated user' => array( //Default Registered user.
+     'access news feeds',
+     'access content',
+    ),
+  );
 }
