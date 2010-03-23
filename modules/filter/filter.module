@@ -1,5 +1,5 @@
 <?php
-// $Id: filter.module,v 1.204.2.10 2010-03-01 10:54:29 goba Exp $
+// $Id: filter.module,v 1.204.2.12 2010-03-22 12:10:03 goba Exp $
 
 /**
  * @file
@@ -377,9 +377,16 @@ function filter_list_format($format) {
   if (!isset($filters[$format])) {
     $result = db_query("SELECT * FROM {filters} WHERE format = %d ORDER BY weight, module, delta", $format);
     if (db_affected_rows($result) == 0 && !db_result(db_query("SELECT 1 FROM {filter_formats} WHERE format = %d", $format))) {
-      // The format has no filters and does not exist, use the default input
-      // format.
-      $filters[$format] = filter_list_format(variable_get('filter_default_format', 1));
+      // The format has no filters and does not exist. Use the default input
+      // format. Do not infinitely recurse if the default input format
+      // does not exist,
+      $default = variable_get('filter_default_format', 1);
+      if ($default != $format) {
+        $filters[$format] = filter_list_format($default);
+      }
+      else {
+        $filters[$format] = array();
+      }
     }
     else {
       $filters[$format] = array();
@@ -470,18 +477,22 @@ function check_markup($text, $format = FILTER_FORMAT_DEFAULT, $check = TRUE) {
 }
 
 /**
- * Generate a selector for choosing a format in a form.
+ * Generates a selector for choosing a format in a form.
  *
- * @ingroup forms
- * @see filter_form_validate()
  * @param $value
- *   The ID of the format that is currently selected.
+ *   The ID of the format that is currently selected; uses the default format
+ *   if not provided.
  * @param $weight
- *   The weight of the input format.
+ *   The weight of the form element within the form.
  * @param $parents
- *   Required when defining multiple input formats on a single node or having a different parent than 'format'.
+ *   The parents array of the element. Required when defining multiple text
+ *   formats on a single form or having a different parent than 'format'.
+ *
  * @return
- *   HTML for the form element.
+ *   Form API array for the form element.
+ *
+ * @see filter_form_validate()
+ * @ingroup forms
  */
 function filter_form($value = FILTER_FORMAT_DEFAULT, $weight = NULL, $parents = array('format')) {
   $value = filter_resolve_format($value);
@@ -528,6 +539,11 @@ function filter_form($value = FILTER_FORMAT_DEFAULT, $weight = NULL, $parents = 
   return $form;
 }
 
+/**
+ * Validation callback for filter elements in a form.
+ *
+ * @see filter_form().
+ */
 function filter_form_validate($form) {
   foreach (element_children($form) as $key) {
     if ($form[$key]['#value'] == $form[$key]['#return_value']) {
